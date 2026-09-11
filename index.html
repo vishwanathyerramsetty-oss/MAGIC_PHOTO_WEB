@@ -56,10 +56,9 @@ let referencePhotos=[],liveOrb=null,scannerRunning=false,videoPlaying=false,last
 // consecutive scans before any video is opened.
 let candidateId=null;
 let candidateCount=0;
-const REQUIRED_MATCHES=18;
-const REQUIRED_INLIERS=10;
-const REQUIRED_CONFIRMATIONS=2;
-const MATCH_RATIO=0.75;
+const REQUIRED_MATCHES=30;
+const REQUIRED_CONFIRMATIONS=3;
+const MATCH_RATIO=0.70;
 
 function onOpenCvReady(){
  statusText.innerText="OpenCV ready. Press START SCANNER.";
@@ -71,16 +70,16 @@ async function loadReferencePhoto(photo){
   const img=new Image();
   img.onload=function(){
    try{
-    const targetWidth=800,scale=targetWidth/img.width;
+    const targetWidth=640,scale=targetWidth/img.width;
     const refCanvas=document.createElement("canvas");
     refCanvas.width=targetWidth; refCanvas.height=Math.round(img.height*scale);
     const ctx=refCanvas.getContext("2d");
     ctx.drawImage(img,0,0,refCanvas.width,refCanvas.height);
     const mat=cv.imread(refCanvas),gray=new cv.Mat();
     cv.cvtColor(mat,gray,cv.COLOR_RGBA2GRAY);
-    const orb=new cv.ORB(1200),keypoints=new cv.KeyPointVector(),descriptors=new cv.Mat();
+    const orb=new cv.ORB(800),keypoints=new cv.KeyPointVector(),descriptors=new cv.Mat();
     orb.detectAndCompute(gray,new cv.Mat(),keypoints,descriptors);
-    referencePhotos.push({id:photo.id,video:photo.video,descriptors:descriptors.clone(),keypoints:keypoints.clone()});
+    referencePhotos.push({id:photo.id,video:photo.video,descriptors:descriptors.clone()});
     mat.delete();gray.delete();orb.delete();keypoints.delete();descriptors.delete();
     resolve();
    }catch(error){reject(error)}
@@ -111,9 +110,9 @@ async function startScanner(){
   camera.srcObject=stream; await camera.play();
   candidateId=null; candidateCount=0;
   if(referencePhotos.length===0) await loadReferencePhotos();
-  if(!liveOrb) liveOrb=new cv.ORB(1200);
+  if(!liveOrb) liveOrb=new cv.ORB(800);
   scannerRunning=true; startButton.innerText="SCANNING...";
-  statusText.innerText="Scanning... Point camera directly at any PHOTO_001 to PHOTO_009.";
+  statusText.innerText="Scanning... Point at PHOTO_001, 002 or 003.";
   lastScanTime=0; requestAnimationFrame(scanFrame);
  }catch(error){
   console.error(error); scannerRunning=false; startButton.disabled=false; startButton.innerText="START SCANNER";
@@ -125,84 +124,63 @@ async function startScanner(){
 
 function scanFrame(timestamp){
  if(!scannerRunning||videoPlaying)return;
- if(timestamp-lastScanTime<350){requestAnimationFrame(scanFrame);return}
+ if(timestamp-lastScanTime<250){requestAnimationFrame(scanFrame);return}
  lastScanTime=timestamp;
  try{
   const width=camera.videoWidth,height=camera.videoHeight;
   if(!width||!height){requestAnimationFrame(scanFrame);return}
-  canvas.width=800; canvas.height=Math.round(height*(800/width));
+  canvas.width=640; canvas.height=Math.round(height*(640/width));
   context.drawImage(camera,0,0,canvas.width,canvas.height);
   const frame=cv.imread(canvas),gray=new cv.Mat();
   cv.cvtColor(frame,gray,cv.COLOR_RGBA2GRAY);
   const keypoints=new cv.KeyPointVector(),descriptors=new cv.Mat();
   liveOrb.detectAndCompute(gray,new cv.Mat(),keypoints,descriptors);
-  let bestPhoto=null,bestScore=0,bestGoodMatches=0,bestInliers=0;
+  let bestPhoto=null,bestMatches=0;
   if(!descriptors.empty()){
    for(const reference of referencePhotos){
     const matcher=new cv.BFMatcher(cv.NORM_HAMMING,false);
     const matches=new cv.DMatchVectorVector();
     matcher.knnMatch(reference.descriptors,descriptors,matches,2);
-
-    const good=[];
+    let goodMatches=0;
     for(let i=0;i<matches.size();i++){
      const pair=matches.get(i);
      if(pair.size()>=2){
       const first=pair.get(0),second=pair.get(1);
-      if(first.distance<MATCH_RATIO*second.distance) good.push(first);
+      if(first.distance<MATCH_RATIO*second.distance)goodMatches++;
      }
     }
-
-    let inliers=0;
-    if(good.length>=REQUIRED_MATCHES){
-     const src=[],dst=[];
-     for(const m of good){
-      const rp=reference.keypoints.get(m.queryIdx).pt;
-      const lp=keypoints.get(m.trainIdx).pt;
-      src.push(rp.x,rp.y);
-      dst.push(lp.x,lp.y);
-     }
-     const srcMat=cv.matFromArray(good.length,1,cv.CV_32FC2,src);
-     const dstMat=cv.matFromArray(good.length,1,cv.CV_32FC2,dst);
-     const mask=new cv.Mat();
-     const H=cv.findHomography(srcMat,dstMat,cv.RANSAC,5.0,mask);
-     if(!H.empty()){
-      for(let i=0;i<mask.rows;i++){ if(mask.ucharPtr(i,0)[0]) inliers++; }
-     }
-     H.delete(); mask.delete(); srcMat.delete(); dstMat.delete();
-    }
-
-    // Geometry-aware score: reward matches that agree on the same photo.
-    const score=inliers*10+good.length;
-    if(inliers>=REQUIRED_INLIERS && score>bestScore){
-     bestScore=score; bestPhoto=reference; bestGoodMatches=good.length; bestInliers=inliers;
-    }
-
-    matches.delete(); matcher.delete();
+    if(goodMatches>bestMatches){bestMatches=goodMatches;bestPhoto=reference}
+    matches.delete();matcher.delete();
    }
   }
-
-  if(bestPhoto){
+  // Require a strong match AND repeated confirmation.
+  if(bestPhoto&&bestMatches>=REQUIRED_MATCHES){
    if(candidateId===bestPhoto.id){
     candidateCount++;
    }else{
     candidateId=bestPhoto.id;
     candidateCount=1;
    }
-   statusText.innerText=bestPhoto.id+" detected: "+bestGoodMatches+" matches, "+bestInliers+" inliers ("+candidateCount+"/"+REQUIRED_CONFIRMATIONS+")";
+
+   statusText.innerText=
+    bestPhoto.id+" detected: "+bestMatches+
+    " matches ("+candidateCount+"/"+REQUIRED_CONFIRMATIONS+")";
   }else{
    candidateId=null;
    candidateCount=0;
-   statusText.innerText="Scanning... Point camera directly at the photo.";
+   statusText.innerText="Scanning... Point camera at a photo.";
   }
 
-  if(bestPhoto && candidateCount>=REQUIRED_CONFIRMATIONS && Date.now()-lastDetectionTime>5000){
-   lastDetectionTime=Date.now();
-   recognizePhoto(bestPhoto);
+  const now=Date.now();
+  if(bestPhoto&&bestMatches>=REQUIRED_MATCHES&&
+     candidateCount>=REQUIRED_CONFIRMATIONS&&
+     now-lastDetectionTime>5000){
+   lastDetectionTime=now;
+   recognizePhoto(bestPhoto,bestMatches);
   }
   frame.delete();gray.delete();keypoints.delete();descriptors.delete();
-  requestAnimationFrame(scanFrame);
-  return;
-
+ }catch(error){console.error("SCAN ERROR:",error)}
+ if(scannerRunning&&!videoPlaying)requestAnimationFrame(scanFrame);
 }
 
 function recognizePhoto(photo,goodMatches){
