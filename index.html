@@ -19,7 +19,7 @@
 <style>
 
 /* =========================================================
-   BASIC
+   BASIC PAGE
    ========================================================= */
 
 *{
@@ -32,8 +32,10 @@ body{
     padding:0;
     width:100%;
     min-height:100%;
+
     background:#111;
     color:#fff;
+
     font-family:Arial,sans-serif;
     text-align:center;
 }
@@ -43,6 +45,7 @@ h1{
     font-size:23px;
 }
 
+
 /* =========================================================
    CAMERA
    ========================================================= */
@@ -51,14 +54,17 @@ h1{
     width:100%;
     max-width:700px;
     height:auto;
+
     display:block;
     margin:0 auto;
+
     background:#000;
 }
 
 #canvas{
     display:none;
 }
+
 
 /* =========================================================
    STATUS
@@ -67,22 +73,22 @@ h1{
 #status{
     margin:10px 12px;
     min-height:28px;
+
     font-size:17px;
 }
+
 
 /* =========================================================
    START BUTTON
    ========================================================= */
 
-#startButton,
-#playSoundButton{
+#startButton{
 
     padding:14px 24px;
 
     font-size:18px;
 
     border:0;
-
     border-radius:9px;
 
     cursor:pointer;
@@ -92,8 +98,9 @@ h1{
     opacity:.5;
 }
 
+
 /* =========================================================
-   VIDEO SCREEN
+   FULL SCREEN VIDEO
    ========================================================= */
 
 #videoContainer{
@@ -115,8 +122,9 @@ h1{
     justify-content:center;
 }
 
+
 /* =========================================================
-   VIDEO
+   VIDEO PLAYER
    ========================================================= */
 
 #videoPlayer{
@@ -129,6 +137,7 @@ h1{
     background:#000;
 }
 
+
 /* =========================================================
    CLOSE BUTTON
    ========================================================= */
@@ -137,50 +146,54 @@ h1{
 
     position:absolute;
 
-    top:max(15px,env(safe-area-inset-top));
+    top:max(18px,env(safe-area-inset-top));
 
-    right:15px;
+    right:18px;
 
-    z-index:110;
+    z-index:200;
 
-    width:58px;
-    height:58px;
+    min-width:90px;
+    height:55px;
 
-    padding:0;
+    padding:0 18px;
 
     border:2px solid #fff;
 
-    border-radius:50%;
+    border-radius:12px;
 
-    background:rgba(0,0,0,0.75);
+    background:rgba(0,0,0,0.80);
 
     color:#fff;
 
-    font-size:30px;
+    font-size:20px;
 
     font-weight:bold;
 
     cursor:pointer;
 
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.7);
+
     display:flex;
 
     align-items:center;
-
     justify-content:center;
-
-    box-shadow:0 2px 8px rgba(0,0,0,.6);
 
 }
 
-/* Button press effect */
+
+/* =========================================================
+   CLOSE BUTTON PRESS
+   ========================================================= */
 
 #closeVideo:active{
 
-    transform:scale(.92);
+    transform:scale(.94);
 
     background:#333;
 
 }
+
 
 /* =========================================================
    SOUND PANEL
@@ -195,18 +208,31 @@ h1{
     left:0;
     right:0;
 
-    bottom:max(30px,env(safe-area-inset-bottom));
+    bottom:
+        max(30px,
+        env(safe-area-inset-bottom));
 
-    z-index:103;
+    z-index:201;
 }
 
+
 #playSoundButton{
+
+    padding:14px 24px;
+
+    font-size:18px;
+
+    border:0;
+
+    border-radius:9px;
 
     background:#fff;
 
     color:#000;
 
     font-weight:bold;
+
+    cursor:pointer;
 
 }
 
@@ -218,17 +244,31 @@ h1{
 <body>
 
 
-<h1>MAGIC PHOTO FRAME</h1>
+<!-- =====================================================
+     TITLE
+     ===================================================== -->
 
+<h1>
+    MAGIC PHOTO FRAME
+</h1>
+
+
+<!-- =====================================================
+     START SCANNER
+     ===================================================== -->
 
 <button id="startButton"
         onclick="startScanner()"
         disabled>
 
-LOADING...
+    LOADING...
 
 </button>
 
+
+<!-- =====================================================
+     CAMERA
+     ===================================================== -->
 
 <video id="camera"
        autoplay
@@ -240,31 +280,39 @@ LOADING...
 <canvas id="canvas"></canvas>
 
 
+<!-- =====================================================
+     STATUS
+     ===================================================== -->
+
 <div id="status">
 
-Loading OpenCV...
+    Loading OpenCV...
 
 </div>
 
 
 <!-- =====================================================
-     VIDEO OVERLAY
+     VIDEO SCREEN
      ===================================================== -->
 
 <div id="videoContainer">
 
 
-    <!-- CLOSE BUTTON -->
+    <!-- ===============================================
+         CLOSE VIDEO BUTTON
+         =============================================== -->
 
     <button id="closeVideo"
             onclick="closeVideo()">
 
-        ✕
+        ✕ CLOSE
 
     </button>
 
 
-    <!-- VIDEO -->
+    <!-- ===============================================
+         VIDEO
+         =============================================== -->
 
     <video id="videoPlayer"
            controls
@@ -273,7 +321,9 @@ Loading OpenCV...
     </video>
 
 
-    <!-- SOUND -->
+    <!-- ===============================================
+         SOUND BUTTON
+         =============================================== -->
 
     <div id="soundPanel">
 
@@ -293,25 +343,32 @@ Loading OpenCV...
 <script>
 
 /* =========================================================
-   CONFIGURATION
+   GITHUB VIDEO LOCATION
    ========================================================= */
 
 const GITHUB_BASE =
 "https://vishwanathyerramsetty-oss.github.io/MAGIC_PHOTO_WEB/";
 
 
-/*
+/* =========================================================
    NUMBER OF PHOTOS
+   =========================================================
 
-   Change 9 to 16 when your 16 Ganesha photos are ready.
-*/
+   Currently 9.
+
+   When you have 16 Ganesha photos,
+   simply change this to:
+
+   const TOTAL_PHOTOS = 16;
+
+   ========================================================= */
 
 const TOTAL_PHOTOS = 9;
 
 
-/*
-   Create photo/video list automatically.
-*/
+/* =========================================================
+   CREATE PHOTO / VIDEO LIST
+   ========================================================= */
 
 const photoVideos =
 Array.from(
@@ -323,7 +380,8 @@ Array.from(
 
         return {
 
-            id:"PHOTO_"+n,
+            id:
+                "PHOTO_"+n,
 
             image:
                 "photos/PHOTO_"+n+".jpg",
@@ -339,7 +397,7 @@ Array.from(
 
 
 /* =========================================================
-   GLOBAL VARIABLES
+   PAGE ELEMENTS
    ========================================================= */
 
 let camera;
@@ -355,7 +413,7 @@ let soundPanel;
 
 
 /* =========================================================
-   OPENCV DATA
+   OPENCV
    ========================================================= */
 
 let referencePhotos=[];
@@ -364,7 +422,7 @@ let liveOrb=null;
 
 
 /* =========================================================
-   STATE
+   SCANNER STATE
    ========================================================= */
 
 let scannerRunning=false;
@@ -373,17 +431,12 @@ let videoPlaying=false;
 
 
 /* =========================================================
-   DETECTION
+   DETECTION STATE
    ========================================================= */
 
 let lastDetectionTime=0;
 
 let lastScanTime=0;
-
-
-/*
-   Candidate tracking
-*/
 
 let candidateId=null;
 
@@ -391,50 +444,42 @@ let candidateCount=0;
 
 
 /* =========================================================
-   SPEED / QUALITY SETTINGS
+   RECOGNITION SETTINGS
    ========================================================= */
 
-
 /*
-   OLD CODE:
-
-   REQUIRED_MATCHES = 30
-   REQUIRED_CONFIRMATIONS = 3
-   SCAN = 250ms
-
-   NEW:
-
-   Strong enough match:
-   22 good ORB matches
-
-   Confirmation:
-   only 2 frames
-
-   Scan:
-   every 150ms
+   Number of good ORB matches required.
 */
 
 const REQUIRED_MATCHES = 22;
 
+
+/*
+   Number of consecutive successful
+   scans required.
+
+   2 = faster than your original 3.
+*/
+
 const REQUIRED_CONFIRMATIONS = 2;
+
+
+/*
+   Scan every 150 milliseconds.
+*/
 
 const SCAN_INTERVAL = 150;
 
 
 /*
-   Lowe ratio.
-
-   Lower = stricter.
-   Higher = easier detection.
-
-   0.70 is a good starting point.
+   Lowe's ratio test.
 */
 
 const MATCH_RATIO = 0.70;
 
 
 /*
-   Prevent repeated recognition.
+   Prevent immediate repeated recognition.
 */
 
 const DETECTION_COOLDOWN = 4000;
@@ -453,6 +498,7 @@ function onOpenCvReady(){
 
     startButton.innerText =
         "START SCANNER";
+
 }
 
 
@@ -462,163 +508,179 @@ function onOpenCvReady(){
 
 async function loadReferencePhoto(photo){
 
-    return new Promise((resolve,reject)=>{
+    return new Promise(
+        (resolve,reject)=>{
 
-        const img =
-            new Image();
-
-
-        img.onload=function(){
-
-            try{
-
-                /*
-                   Smaller reference image
-                   = faster ORB processing.
-                */
-
-                const targetWidth=480;
-
-                const scale =
-                    targetWidth/img.width;
+            const img =
+                new Image();
 
 
-                const refCanvas =
-                    document.createElement("canvas");
+            img.onload=function(){
+
+                try{
+
+                    /*
+                       Use 480px reference width
+                       for faster processing.
+                    */
+
+                    const targetWidth=480;
+
+                    const scale =
+                        targetWidth/
+                        img.width;
 
 
-                refCanvas.width =
-                    targetWidth;
+                    const refCanvas =
+                        document.createElement(
+                            "canvas"
+                        );
 
 
-                refCanvas.height =
-                    Math.round(
-                        img.height*scale
+                    refCanvas.width =
+                        targetWidth;
+
+
+                    refCanvas.height =
+                        Math.round(
+                            img.height*scale
+                        );
+
+
+                    const ctx =
+                        refCanvas.getContext(
+                            "2d"
+                        );
+
+
+                    ctx.drawImage(
+
+                        img,
+
+                        0,
+                        0,
+
+                        refCanvas.width,
+                        refCanvas.height
+
                     );
 
 
-                const ctx =
-                    refCanvas.getContext("2d");
+                    /*
+                       Convert to OpenCV.
+                    */
+
+                    const mat =
+                        cv.imread(
+                            refCanvas
+                        );
 
 
-                ctx.drawImage(
-                    img,
-                    0,
-                    0,
-                    refCanvas.width,
-                    refCanvas.height
+                    const gray =
+                        new cv.Mat();
+
+
+                    cv.cvtColor(
+
+                        mat,
+
+                        gray,
+
+                        cv.COLOR_RGBA2GRAY
+
+                    );
+
+
+                    /*
+                       ORB detector.
+                    */
+
+                    const orb =
+                        new cv.ORB(600);
+
+
+                    const keypoints =
+                        new cv.KeyPointVector();
+
+
+                    const descriptors =
+                        new cv.Mat();
+
+
+                    orb.detectAndCompute(
+
+                        gray,
+
+                        new cv.Mat(),
+
+                        keypoints,
+
+                        descriptors
+
+                    );
+
+
+                    /*
+                       Store descriptors.
+                    */
+
+                    referencePhotos.push({
+
+                        id:
+                            photo.id,
+
+                        video:
+                            photo.video,
+
+                        descriptors:
+                            descriptors.clone()
+
+                    });
+
+
+                    /*
+                       Release memory.
+                    */
+
+                    mat.delete();
+
+                    gray.delete();
+
+                    orb.delete();
+
+                    keypoints.delete();
+
+                    descriptors.delete();
+
+
+                    resolve();
+
+                }
+                catch(error){
+
+                    reject(error);
+
+                }
+
+            };
+
+
+            img.onerror=function(){
+
+                reject(
+                    new Error(
+                        "Cannot load "+
+                        photo.image
+                    )
                 );
 
-
-                /*
-                   Convert image to OpenCV matrix.
-                */
-
-                const mat =
-                    cv.imread(refCanvas);
+            };
 
 
-                const gray =
-                    new cv.Mat();
+            img.src=photo.image;
 
-
-                cv.cvtColor(
-                    mat,
-                    gray,
-                    cv.COLOR_RGBA2GRAY
-                );
-
-
-                /*
-                   ORB
-                */
-
-                const orb =
-                    new cv.ORB(600);
-
-
-                const keypoints =
-                    new cv.KeyPointVector();
-
-
-                const descriptors =
-                    new cv.Mat();
-
-
-                orb.detectAndCompute(
-                    gray,
-                    new cv.Mat(),
-                    keypoints,
-                    descriptors
-                );
-
-
-                /*
-                   Save descriptors only.
-
-                   This is much faster during scanning.
-                */
-
-                referencePhotos.push({
-
-                    id:photo.id,
-
-                    video:photo.video,
-
-                    descriptors:
-                        descriptors.clone()
-
-                });
-
-
-                /*
-                   Clean memory.
-                */
-
-                mat.delete();
-
-                gray.delete();
-
-                orb.delete();
-
-                keypoints.delete();
-
-                descriptors.delete();
-
-
-                resolve();
-
-            }
-            catch(error){
-
-                reject(error);
-
-            }
-
-        };
-
-
-        img.onerror=function(){
-
-            reject(
-                new Error(
-                    "Cannot load "+photo.image
-                )
-            );
-
-        };
-
-
-        /*
-           Cache busting is NOT used here.
-
-           GitHub Pages can therefore cache
-           your reference images efficiently.
-        */
-
-        img.src=photo.image;
-
-    });
+        }
+    );
 
 }
 
@@ -640,7 +702,9 @@ async function loadReferencePhotos(){
         const photo of photoVideos
     ){
 
-        await loadReferencePhoto(photo);
+        await loadReferencePhoto(
+            photo
+        );
 
     }
 
@@ -658,7 +722,7 @@ async function loadReferencePhotos(){
 async function startScanner(){
 
     /*
-       Don't start twice.
+       Don't start if already running.
     */
 
     if(
@@ -698,11 +762,12 @@ async function startScanner(){
 
 
         /*
-           Start camera.
+           Open rear camera.
         */
 
         const stream =
-            await navigator.mediaDevices.getUserMedia({
+            await navigator.mediaDevices
+            .getUserMedia({
 
                 video:{
 
@@ -725,14 +790,15 @@ async function startScanner(){
             });
 
 
-        camera.srcObject=stream;
+        camera.srcObject =
+            stream;
 
 
         await camera.play();
 
 
         /*
-           Reset detection.
+           Reset candidate.
         */
 
         candidateId=null;
@@ -741,7 +807,7 @@ async function startScanner(){
 
 
         /*
-           Load reference photos only once.
+           Load reference images only once.
         */
 
         if(
@@ -754,7 +820,7 @@ async function startScanner(){
 
 
         /*
-           Create ORB only once.
+           Create ORB once.
         */
 
         if(!liveOrb){
@@ -783,7 +849,6 @@ async function startScanner(){
             scanFrame
         );
 
-
     }
     catch(error){
 
@@ -800,7 +865,8 @@ async function startScanner(){
 
 
         if(
-            error.name==="NotAllowedError"
+            error.name===
+            "NotAllowedError"
         ){
 
             statusText.innerText =
@@ -809,7 +875,8 @@ async function startScanner(){
         }
 
         else if(
-            error.name==="NotFoundError"
+            error.name===
+            "NotFoundError"
         ){
 
             statusText.innerText =
@@ -831,13 +898,13 @@ async function startScanner(){
 
 
 /* =========================================================
-   SCAN FRAME
+   SCAN CAMERA FRAME
    ========================================================= */
 
 function scanFrame(timestamp){
 
     /*
-       Stop scanning when video is playing.
+       Stop when video is playing.
     */
 
     if(
@@ -851,7 +918,7 @@ function scanFrame(timestamp){
 
 
     /*
-       Control scan speed.
+       Limit scan frequency.
     */
 
     if(
@@ -895,14 +962,11 @@ function scanFrame(timestamp){
         }
 
 
-        /*
-           480px camera frame.
+        /* ==============================================
+           REDUCE CAMERA FRAME TO 480px
 
-           This is the biggest speed improvement.
-
-           640 -> 480 means much less
-           ORB processing.
-        */
+           This makes recognition faster.
+           ============================================== */
 
         const scanWidth=480;
 
@@ -931,9 +995,9 @@ function scanFrame(timestamp){
         );
 
 
-        /*
-           Convert camera frame.
-        */
+        /* ==============================================
+           OPENCV FRAME
+           ============================================== */
 
         const frame =
             cv.imread(canvas);
@@ -954,9 +1018,9 @@ function scanFrame(timestamp){
         );
 
 
-        /*
-           Detect ORB features.
-        */
+        /* ==============================================
+           DETECT ORB
+           ============================================== */
 
         const keypoints =
             new cv.KeyPointVector();
@@ -984,17 +1048,13 @@ function scanFrame(timestamp){
         let bestMatches=0;
 
 
-        /*
-           Only continue if descriptors exist.
-        */
+        /* ==============================================
+           COMPARE WITH REFERENCE PHOTOS
+           ============================================== */
 
         if(
             !descriptors.empty()
         ){
-
-            /*
-               Compare against references.
-            */
 
             for(
                 const reference
@@ -1066,7 +1126,7 @@ function scanFrame(timestamp){
 
 
                 /*
-                   Keep only best photo.
+                   Keep strongest photo.
                 */
 
                 if(
@@ -1089,11 +1149,8 @@ function scanFrame(timestamp){
 
 
                 /*
-                   EARLY EXIT
-
-                   If we already have an excellent
-                   match, don't waste time comparing
-                   the remaining photos.
+                   Excellent match:
+                   stop checking remaining photos.
                 */
 
                 if(
@@ -1109,18 +1166,14 @@ function scanFrame(timestamp){
         }
 
 
-        /* =================================================
-           PHOTO FOUND
-           ================================================= */
+        /* ==============================================
+           MATCH CONFIRMATION
+           ============================================== */
 
         if(
             bestPhoto &&
             bestMatches>=REQUIRED_MATCHES
         ){
-
-            /*
-               Same candidate?
-            */
 
             if(
                 candidateId===
@@ -1130,7 +1183,6 @@ function scanFrame(timestamp){
                 candidateCount++;
 
             }
-
             else{
 
                 candidateId=
@@ -1151,18 +1203,14 @@ function scanFrame(timestamp){
                 REQUIRED_CONFIRMATIONS+
                 ")";
 
-
         }
 
         else{
 
-            /*
-               No strong match.
-            */
-
             candidateId=null;
 
             candidateCount=0;
+
 
             statusText.innerText=
                 "Scanning... Point camera at a photo.";
@@ -1170,9 +1218,9 @@ function scanFrame(timestamp){
         }
 
 
-        /* =================================================
-           RECOGNIZE
-           ================================================= */
+        /* ==============================================
+           OPEN VIDEO
+           ============================================== */
 
         const now =
             Date.now();
@@ -1207,9 +1255,9 @@ function scanFrame(timestamp){
         }
 
 
-        /*
-           Release OpenCV memory.
-        */
+        /* ==============================================
+           RELEASE MEMORY
+           ============================================== */
 
         frame.delete();
 
@@ -1231,9 +1279,9 @@ function scanFrame(timestamp){
     }
 
 
-    /*
-       Continue scanning.
-    */
+    /* ==============================================
+       CONTINUE SCANNING
+       ============================================== */
 
     if(
         scannerRunning &&
@@ -1288,7 +1336,7 @@ async function playVideo(videoUrl){
 
 
     /*
-       Stop camera.
+       Stop camera completely.
     */
 
     if(
@@ -1298,7 +1346,9 @@ async function playVideo(videoUrl){
         camera.srcObject
             .getTracks()
             .forEach(
-                track=>track.stop()
+                track=>{
+                    track.stop();
+                }
             );
 
         camera.srcObject=null;
@@ -1307,7 +1357,7 @@ async function playVideo(videoUrl){
 
 
     /*
-       Show video.
+       Show video container.
     */
 
     videoContainer.style.display=
@@ -1328,6 +1378,7 @@ async function playVideo(videoUrl){
 
     videoPlayer.muted=false;
 
+
     videoPlayer.load();
 
 
@@ -1340,7 +1391,6 @@ async function playVideo(videoUrl){
         await videoPlayer.play();
 
     }
-
     catch(error){
 
         console.log(
@@ -1364,7 +1414,6 @@ async function playVideo(videoUrl){
                 "block";
 
         }
-
         catch(secondError){
 
             console.error(
@@ -1378,7 +1427,8 @@ async function playVideo(videoUrl){
 
 
     /*
-       Automatically close when video ends.
+       Automatically close
+       after video finishes.
     */
 
     videoPlayer.onended=
@@ -1399,6 +1449,7 @@ function enableSound(){
 
     videoPlayer.muted=false;
 
+
     soundPanel.style.display=
         "none";
 
@@ -1406,11 +1457,14 @@ function enableSound(){
     videoPlayer
         .play()
         .catch(
-            error =>
-            console.error(
-                "Sound enable error:",
-                error
-            )
+            error=>{
+
+                console.error(
+                    "Sound enable error:",
+                    error
+                );
+
+            }
         );
 
 }
@@ -1423,13 +1477,13 @@ function enableSound(){
 function closeVideo(){
 
     console.log(
-        "CLOSE VIDEO"
+        "CLOSE BUTTON PRESSED"
     );
 
 
-    /*
+    /* ==============================================
        STOP VIDEO
-    */
+       ============================================== */
 
     videoPlayer.pause();
 
@@ -1442,9 +1496,9 @@ function closeVideo(){
     videoPlayer.load();
 
 
-    /*
-       HIDE VIDEO SCREEN
-    */
+    /* ==============================================
+       HIDE VIDEO
+       ============================================== */
 
     videoContainer.style.display=
         "none";
@@ -1454,15 +1508,18 @@ function closeVideo(){
         "none";
 
 
-    /*
-       RESET STATE
-    */
+    /* ==============================================
+       RESET VIDEO STATE
+       ============================================== */
 
     videoPlaying=false;
 
-
     scannerRunning=false;
 
+
+    /* ==============================================
+       RESET DETECTION
+       ============================================== */
 
     candidateId=null;
 
@@ -1470,17 +1527,17 @@ function closeVideo(){
 
 
     /*
-       Prevent the same photo from
-       immediately opening again.
+       Prevent the same photo from opening
+       immediately again.
     */
 
     lastDetectionTime=
         Date.now();
 
 
-    /*
-       Enable start button.
-    */
+    /* ==============================================
+       UPDATE UI
+       ============================================== */
 
     startButton.disabled=false;
 
@@ -1492,13 +1549,13 @@ function closeVideo(){
         "Ready. Point camera at PHOTO.";
 
 
-    /*
-       Restart scanner.
-    */
+    /* ==============================================
+       START CAMERA AGAIN
+       ============================================== */
 
     setTimeout(
 
-        ()=>{
+        function(){
 
             startScanner();
 
@@ -1516,11 +1573,13 @@ function closeVideo(){
    ========================================================= */
 
 window.addEventListener(
+
     "load",
+
     function(){
 
         /*
-           Get elements.
+           Get HTML elements.
         */
 
         camera=
@@ -1581,8 +1640,10 @@ window.addEventListener(
                 function(){
 
                     if(
+
                         typeof cv!=="undefined" &&
                         cv.Mat
+
                     ){
 
                         clearInterval(
@@ -1607,4 +1668,5 @@ window.addEventListener(
 </script>
 
 </body>
+
 </html>
